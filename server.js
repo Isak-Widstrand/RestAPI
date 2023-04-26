@@ -22,6 +22,19 @@ app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
 app.use(bodyParser.json())
 
+
+const crypto = require('crypto'); //använder NodeJS inbyggda krypteringsfunktioner.
+
+/*
+ Funktion som tar någon form av indata, t.ex. ett lösenord i klartext,
+ hashar det och returnerar hashvärdet som en sträng.
+*/
+function hash(data) {
+ const hash = crypto.createHash('sha256');
+ hash.update(data);
+ return hash.digest('hex')
+}
+
 app.get('/users', function(req, res) {
   //kod här för att hantera anrop…
   var sql = "SELECT * FROM users"
@@ -38,26 +51,12 @@ app.get('/users', function(req, res) {
   });
 });
 
-app.get('/users/:Name', function(req, res) {
-  let sql = `SELECT * FROM users WHERE Name = '${req.params.Name}'`;
-  connection.query(sql, function (err, result, fields) {
-    if (err) throw err;
-    console.log(result.length)
-    if (result.length === 0) {
-      res.status(404).json({
-        message: "User not found"
-      });
-    } else {
-      res.send(result);
-    }
-  });
-});
-
 app.get('/users/:Id', function(req, res) {
-  let sql = `SELECT * FROM users WHERE Id = '${req.params.Id}'`;
+  let sql = `SELECT * FROM users WHERE Id = ${req.params.Id}`;
   connection.query(sql, function (err, result, fields) {
     if (err) throw err;
-    console.log(result.length)
+    
+    console.log(result, result.length)
     if (result.length === 0) {
       res.status(404).json({
         message: "User not found"
@@ -112,7 +111,6 @@ app.put('/users/:id', (req, res) => {
 app.get('/', (req, res) => {
   res.send(`<h1>Dokumentation</h1>
   <ul>
-  <li>get from databas users med Name - /users/Name</li>
   <li>get from databas users med Id - /users/Id</li>
   <li>get alla users from databas users - /users</li>
   <li>post in i databas till users - post /users</li>
