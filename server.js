@@ -1,12 +1,7 @@
 const express = require('express')
 const mysql = require('mysql')
 const app = express()
-
-const swimmers = [
-    { id: 1, name: 'Adam Peaty', country: 'Storbritannien', spec: 'Bröstsim' },
-    { id: 2, name: 'Caeleb Dressel', country: 'USA', spec: 'Frisim' },
-    { id: 3, name: 'Sarah Sjöström', country: 'Sverige', spec: 'Fjärilssim' }
-];
+const port = 5000
 
 var connection = mysql.createConnection({
   host: "localhost",
@@ -20,27 +15,26 @@ connection.connect(function(err) {
   console.log("Connected!");
 });
 
-app.get('/swimmers', (req, res) => {
-    res.send(swimmers);
-});
+var bodyParser = require("body-parser")
 
-app.get('/swimmers/:id', (req, res) => {
-    const swimmer = swimmers.find(s => s.id === parseInt(req.params.id));
-    if (!swimmer) return res.status(404).send('Swimmer not found');
-    res.send(swimmer);
-});
+app.use(bodyParser.urlencoded({ extended: false }))
 
-app.get('/search', (req, res) => {
-  const query = req.query
-  res.send(`Sökresultat: ${JSON.stringify(query)}`)
-})
+// parse application/json
+app.use(bodyParser.json())
 
 app.get('/users', function(req, res) {
   //kod här för att hantera anrop…
   var sql = "SELECT * FROM users"
-  con.query(sql, function(err, result, fields) {
-    if (err) throw err
-    res.json(result)
+  connection.query(sql, function (err, result, fields) {
+    if (err) throw err;
+    console.log(result.length)
+    if (result.length === 0) {
+      res.status(404).json({
+        message: "Users not found"
+      });
+    } else {
+      res.send(result);
+    }
   });
 });
 
@@ -59,12 +53,20 @@ app.get('/users/:Name', function(req, res) {
   });
 });
 
-var bodyParser = require("body-parser")
-
-app.use(bodyParser.urlencoded({ extended: false }))
-
-// parse application/json
-app.use(bodyParser.json())
+app.get('/users/:Id', function(req, res) {
+  let sql = `SELECT * FROM users WHERE Id = '${req.params.Id}'`;
+  connection.query(sql, function (err, result, fields) {
+    if (err) throw err;
+    console.log(result.length)
+    if (result.length === 0) {
+      res.status(404).json({
+        message: "User not found"
+      });
+    } else {
+      res.send(result);
+    }
+  });
+});
 
 app.post('/users', function(req, res) {
   let sql = `Select * FROM users where Name = '${req.body.Name}'`;
@@ -109,16 +111,14 @@ app.put('/users/:id', (req, res) => {
 
 app.get('/', (req, res) => {
   res.send(`<h1>Dokumentation</h1>
-  <ul><li>get  swimmers - /swimmers</li>
-  <li>get swimmer via id - /swimmers/id</li>
-  <li>get /search</li>
-  <li>get from databas users - /users</li>
-  <li>post in i databas till users- post /users</li>
-  <li>uppdatera en user i en databas med id- put /users/?</li>
+  <ul>
+  <li>get from databas users med Name - /users/Name</li>
+  <li>get from databas users med Id - /users/Id</li>
+  <li>get alla users from databas users - /users</li>
+  <li>post in i databas till users - post /users</li>
+  <li>uppdatera en user i en databas med id - put /users/?</li>
   </ul>`)
 })
-
-const port = 5000
 
 app.listen(port, () => {
   console.log(`Server is on port ${port}`)
